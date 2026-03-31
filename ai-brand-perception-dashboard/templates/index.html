@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrandPulse AI — Brand Perception & Risk Intelligence</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/wordcloud2.js@1.1.0/src/wordcloud2.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060910;
+            --surface: #0d1117;
+            --surface2: #131923;
+            --surface3: #1a2332;
+            --border: rgba(255,255,255,0.06);
+            --border-bright: rgba(255,255,255,0.12);
+            --accent: #00d4ff;
+            --accent2: #7c3aed;
+            --accent3: #10b981;
+            --danger: #ef4444;
+            --warn: #f59e0b;
+            --text: #e8edf5;
+            --text-muted: #6b7a99;
+            --text-dim: #3d4f6b;
+            --positive: #10b981;
+            --negative: #ef4444;
+            --neutral: #f59e0b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 600px;
+            background: radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, rgba(0,212,255,0.05) 45%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 28px 100px;
+        }
+
+        /* ── HEADER ── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 28px 0 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo { display: flex; align-items: center; gap: 10px; }
+
+        .logo-icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800; font-size: 1.25rem;
+            letter-spacing: -0.5px; color: var(--text);
+        }
+        .logo-text span { color: var(--accent); }
+
+        .header-right { display: flex; align-items: center; gap: 12px; }
+
+        .header-time {
+            font-size: 0.72rem; color: var(--text-dim);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 5px 12px; border-radius: 20px;
+        }
+
+        .header-badge {
+            font-size: 0.7rem; font-weight: 500;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--text-muted);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            padding: 5px 12px; border-radius: 20px;
+        }
+
+        /* ── HERO ── */
+        .hero { padding: 72px 0 52px; text-align: center; }
+
+        .hero-label {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 0.75rem; font-weight: 500;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: var(--accent);
+            background: rgba(0,212,255,0.08);
+            border: 1px solid rgba(0,212,255,0.2);
+            padding: 6px 16px; border-radius: 20px;
+            margin-bottom: 28px;
+        }
+
+        .hero-label::before {
+            content: '';
+            width: 6px; height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800; line-height: 1.1;
+            letter-spacing: -1.5px; color: var(--text);
+            margin-bottom: 20px;
+        }
+
+        h1 .gradient-word {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: 1.05rem; color: var(--text-muted);
+            font-weight: 300; max-width: 520px;
+            margin: 0 auto 48px; line-height: 1.7;
+        }
+
+        /* ── SEARCH ── */
+        .search-wrap {
+            display: flex; align-items: center;
+            max-width: 640px; margin: 0 auto;
+            background: var(--surface2);
+            border: 1px solid var(--border-bright);
+            border-radius: 14px;
+            padding: 6px 6px 6px 20px;
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+
+        .search-wrap:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,212,255,0.1), 0 0 40px rgba(0,212,255,0.07);
+        }
+
+        .search-icon { color: var(--text-muted); font-size: 1rem; margin-right: 6px; flex-shrink: 0; }
+
+        .search-wrap input {
+            flex: 1; background: transparent;
+            border: none; outline: none;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem; padding: 10px 0;
+        }
+        .search-wrap input::placeholder { color: var(--text-dim); }
+
+        .btn-analyze {
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            color: white; border: none;
+            padding: 12px 24px; border-radius: 10px;
+            font-family: 'Syne', sans-serif;
+            font-size: 0.88rem; font-weight: 700;
+            letter-spacing: 0.5px; cursor: pointer;
+            white-space: nowrap;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .btn-analyze:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-analyze:active { transform: translateY(0); }
+
+        .search-hint { margin-top: 14px; font-size: 0.78rem; color: var(--text-dim); }
+        .search-hint span { color: var(--text-muted); }
+
+        /* ── LOADING SKELETON ── */
+        .loading-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(6,9,16,0.85);
+            backdrop-filter: blur(6px);
+            z-index: 100;
+            flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 20px;
+        }
+
+        .loading-overlay.active { display: flex; }
+
+        .loader-ring {
+            width: 56px; height: 56px;
+            border: 3px solid var(--surface3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loader-text {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem; font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        .loader-steps {
+            display: flex; flex-direction: column; gap: 8px;
+            margin-top: 8px;
+        }
+
+        .loader-step {
+            font-size: 0.78rem; color: var(--text-dim);
+            display: flex; align-items: center; gap: 8px;
+            transition: color 0.3s;
+        }
+
+        .loader-step.active { color: var(--accent); }
+        .loader-step::before { content: '○'; font-size: 0.6rem; }
+        .loader-step.active::before { content: '●'; }
+
+        /* ── TOOLBAR ── */
+        .toolbar {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px; flex-wrap: wrap; gap: 12px;
+        }
+
+        .toolbar-left {
+            font-size: 0.82rem; color: var(--text-muted);
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .analysis-time {
+            background: rgba(0,212,255,0.08);
+            border: 1px solid rgba(0,212,255,0.15);
+            color: var(--accent);
+            padding: 4px 10px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 500;
+        }
+
+        .btn-download {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--surface2);
+            border: 1px solid var(--border-bright);
+            color: var(--text-muted);
+            padding: 9px 18px; border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.83rem; font-weight: 500;
+            cursor: pointer; text-decoration: none;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .btn-download:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ── CRISIS ALERT ── */
+        .crisis-alert {
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            display: flex; align-items: center; gap: 12px;
+            animation: fadeUp 0.4s ease both;
+        }
+
+        .crisis-icon { font-size: 1.2rem; flex-shrink: 0; }
+
+        .crisis-text { font-size: 0.88rem; color: #fca5a5; line-height: 1.5; }
+        .crisis-text strong { color: var(--negative); }
+
+        /* ── BRAND SECTION ── */
+        .brand-section {
+            margin-bottom: 64px;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .brand-header {
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 28px; padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .brand-avatar {
+            width: 54px; height: 54px; border-radius: 14px;
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800; font-size: 1.4rem;
+            color: white; flex-shrink: 0;
+        }
+
+        .brand-title-wrap h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.6rem; font-weight: 800;
+            letter-spacing: -0.5px; color: var(--text);
+        }
+
+        .brand-title-wrap p { font-size: 0.82rem; color: var(--text-muted); margin-top: 3px; }
+
+        .brand-header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        .volatility-badge {
+            padding: 6px 14px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600; letter-spacing: 0.4px;
+            background: rgba(124,58,237,0.12);
+            color: #a78bfa;
+            border: 1px solid rgba(124,58,237,0.25);
+        }
+
+        .risk-badge {
+            padding: 7px 16px; border-radius: 20px;
+            font-size: 0.78rem; font-weight: 600; letter-spacing: 0.5px;
+        }
+
+        .risk-low { background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.25); }
+        .risk-moderate { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); }
+        .risk-high { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+
+        /* ── KPI GRID ── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 16px; margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 14px; padding: 22px 24px;
+            position: relative; overflow: hidden;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .kpi-card:hover { border-color: var(--border-bright); transform: translateY(-2px); }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--kpi-color, var(--accent));
+        }
+
+        .kpi-label {
+            font-size: 0.7rem; font-weight: 600;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.1rem; font-weight: 800;
+            color: var(--text); line-height: 1;
+        }
+
+        .kpi-value .unit { font-size: 1rem; color: var(--text-muted); font-weight: 400; }
+
+        .kpi-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; }
+
+        .health-meter {
+            margin-top: 12px; height: 4px;
+            background: var(--surface3); border-radius: 4px; overflow: hidden;
+        }
+
+        .health-fill {
+            height: 100%; border-radius: 4px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+            transition: width 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        /* ── INFO GRID ── */
+        .info-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 16px; margin-bottom: 20px;
+        }
+
+        @media (max-width: 700px) { .info-grid { grid-template-columns: 1fr; } }
+
+        .info-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 14px; padding: 22px 24px;
+        }
+
+        .info-card-label {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.7rem; font-weight: 600;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 14px;
+        }
+
+        .info-card-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+        .info-card p { font-size: 0.9rem; color: var(--text); line-height: 1.75; font-weight: 300; }
+
+        .topics-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+        .topic-tag {
+            background: var(--surface3);
+            border: 1px solid var(--border-bright);
+            color: var(--text-muted);
+            font-size: 0.78rem; padding: 5px 12px;
+            border-radius: 20px; font-weight: 500;
+            transition: border-color 0.2s, color 0.2s;
+            cursor: default;
+        }
+
+        .topic-tag:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ── METHODOLOGY CARD ── */
+        .methodology-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .methodology-toggle {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px; cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .methodology-toggle:hover { background: var(--surface3); }
+
+        .methodology-toggle-label {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.7rem; font-weight: 600;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .methodology-toggle-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); }
+
+        .methodology-arrow {
+            font-size: 0.8rem; color: var(--text-dim);
+            transition: transform 0.25s;
+        }
+
+        .methodology-body {
+            display: none;
+            padding: 0 24px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .methodology-body.open { display: block; }
+
+        .methodology-arrow.open { transform: rotate(180deg); }
+
+        .method-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px; padding-top: 18px;
+        }
+
+        .method-item { }
+        .method-item h4 {
+            font-size: 0.78rem; font-weight: 600;
+            color: var(--accent); margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        .method-item p { font-size: 0.82rem; color: var(--text-muted); line-height: 1.65; font-weight: 300; }
+
+        /* ── CHART GRID ── */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 16px; margin-bottom: 20px;
+        }
+
+        @media (max-width: 820px) { .chart-grid { grid-template-columns: 1fr; } }
+
+        .chart-row {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 16px; margin-bottom: 20px;
+        }
+
+        @media (max-width: 700px) { .chart-row { grid-template-columns: 1fr; } }
+
+        .chart-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 14px; padding: 24px;
+        }
+
+        .chart-card-title {
+            font-size: 0.7rem; font-weight: 600;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .chart-card-title-left { display: flex; align-items: center; gap: 8px; }
+        .chart-card-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+        .chart-stat {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.82rem; font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .chart-stat span { color: var(--accent); }
+
+        canvas { max-width: 100%; }
+
+        .donut-wrap { display: flex; align-items: center; gap: 20px; }
+
+        .donut-legend { display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; }
+
+        .legend-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.82rem; color: var(--text-muted);
+            min-width: 130px;
+        }
+
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+        .legend-val {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700; color: var(--text);
+            margin-left: auto;
+        }
+
+        /* ── WORD CLOUD ── */
+        .wordcloud-container {
+            width: 100%; height: 220px;
+            position: relative; overflow: hidden;
+            border-radius: 8px;
+        }
+
+        /* ── FORECAST BAND ── */
+        .forecast-note {
+            font-size: 0.72rem; color: var(--text-dim);
+            margin-top: 8px; text-align: right;
+        }
+
+        .forecast-note span { color: var(--accent2); }
+
+        /* ── ARTICLE TABLE ── */
+        .article-table-wrap {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .article-table-header {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .article-table-label {
+            font-size: 0.7rem; font-weight: 600;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--text-muted);
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .article-table-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
+
+        table { width: 100%; border-collapse: collapse; }
+
+        thead th {
+            background: var(--surface3); padding: 11px 20px;
+            text-align: left; font-size: 0.68rem;
+            font-weight: 600; letter-spacing: 1.5px;
+            text-transform: uppercase; color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: var(--surface3); }
+
+        tbody td { padding: 13px 20px; font-size: 0.84rem; color: var(--text); }
+
+        .sent-pill {
+            display: inline-block; padding: 3px 10px;
+            border-radius: 20px; font-size: 0.72rem; font-weight: 600;
+        }
+
+        .sent-positive { background: rgba(16,185,129,0.12); color: #10b981; }
+        .sent-negative { background: rgba(239,68,68,0.12); color: #ef4444; }
+        .sent-neutral { background: rgba(245,158,11,0.12); color: #f59e0b; }
+
+        .score-cell {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700; font-size: 0.88rem;
+        }
+
+        /* ── SECTION DIVIDER ── */
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+            margin: 56px 0;
+        }
+
+        /* ── COMPETITOR RADAR ── */
+        .competitor-section { margin-bottom: 56px; animation: fadeUp 0.5s ease both; }
+
+        .section-heading {
+            display: flex; align-items: baseline; gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .section-heading h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.4rem; font-weight: 800;
+            letter-spacing: -0.5px; color: var(--text);
+        }
+
+        .section-heading .badge {
+            font-size: 0.68rem; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase;
+            color: var(--accent2);
+            background: rgba(124,58,237,0.1);
+            border: 1px solid rgba(124,58,237,0.2);
+            padding: 3px 10px; border-radius: 20px;
+        }
+
+        .section-sub { font-size: 0.83rem; color: var(--text-muted); margin-bottom: 24px; }
+
+        .radar-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 820px) { .radar-grid { grid-template-columns: 1fr; } }
+
+        /* ── RANKING TABLE ── */
+        .ranking-section { margin-bottom: 56px; }
+
+        .table-wrap {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden;
+        }
+
+        .rank-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; color: var(--text-muted); }
+        .rank-num.gold { color: #f59e0b; }
+        .rank-num.silver { color: #94a3b8; }
+        .rank-num.bronze { color: #b45309; }
+
+        .brand-cell { font-weight: 500; font-size: 0.95rem; }
+
+        .score-bar-wrap { display: flex; align-items: center; gap: 14px; }
+
+        .score-bar {
+            flex: 1; height: 5px;
+            background: var(--surface3);
+            border-radius: 5px; overflow: hidden;
+            max-width: 200px;
+        }
+
+        .score-fill {
+            height: 100%; border-radius: 5px;
+            background: linear-gradient(90deg, var(--accent2), var(--accent));
+        }
+
+        .score-num {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700; font-size: 0.95rem;
+            color: var(--accent); min-width: 40px;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            text-align: center; padding: 32px 0 0;
+            border-top: 1px solid var(--border);
+            font-size: 0.78rem; color: var(--text-dim);
+        }
+
+        footer a { color: var(--text-dim); text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loader-ring"></div>
+    <div class="loader-text">Analysing brand perception…</div>
+    <div class="loader-steps">
+        <div class="loader-step active" id="step1">Fetching news articles via GNews</div>
+        <div class="loader-step" id="step2">Running VADER sentiment analysis</div>
+        <div class="loader-step" id="step3">Computing brand health scores</div>
+        <div class="loader-step" id="step4">Generating AI insights</div>
+    </div>
+</div>
+
+<div class="page-wrap">
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo">
+            <div class="logo-icon">⚡</div>
+            <div class="logo-text">Brand<span>Pulse</span> AI</div>
+        </div>
+        <div class="header-right">
+            <div class="header-time" id="headerTime"></div>
+            <div class="header-badge">DS Project · 2025</div>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-label">Live Sentiment Intelligence</div>
+        <h1>Brand Perception &<br><span class="gradient-word">Risk Intelligence</span></h1>
+        <p class="hero-sub">Analyse real-time news sentiment, brand health scores, reputational risk, and competitive positioning for any company.</p>
+
+        <form method="post" id="analyzeForm">
+            <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="brand" placeholder="e.g. Apple, Samsung, Google" required>
+                <button type="submit" class="btn-analyze">Analyze →</button>
+            </div>
+            <div class="search-hint">Separate multiple brands with commas &nbsp;·&nbsp; <span>GNews API + VADER Sentiment + Chart.js</span></div>
+        </form>
+    </div>
+
+    <!-- TOOLBAR -->
+    {% if all_results %}
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <span>{{ all_results | length }} brand{% if all_results | length > 1 %}s{% endif %} analysed</span>
+            <span class="analysis-time" id="analysisTimestamp">Just now</span>
+        </div>
+        <a href="/download" class="btn-download">↓ &nbsp;Export CSV Report</a>
+    </div>
+    {% endif %}
+
+    <!-- BRAND RESULTS -->
+    {% for data in all_results %}
+    <div class="brand-section" style="animation-delay: {{ loop.index0 * 0.12 }}s">
+
+        <!-- Crisis Alert -->
+        {% if data.risk == "High Risk" %}
+        <div class="crisis-alert">
+            <span class="crisis-icon">🚨</span>
+            <div class="crisis-text">
+                <strong>Potential Crisis Signal Detected</strong> — {{ data.brand }} shows a high negative sentiment ratio across recent coverage. Immediate reputation monitoring is advised.
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Brand Header -->
+        <div class="brand-header">
+            <div class="brand-avatar">{{ data.brand[0] | upper }}</div>
+            <div class="brand-title-wrap">
+                <h2>{{ data.brand }}</h2>
+                <p>{{ data.article_count }} articles analysed &nbsp;·&nbsp; Confidence: <strong>{{ data.confidence }}</strong></p>
+            </div>
+            <div class="brand-header-right">
+                <span class="volatility-badge">σ Volatility: <span id="vol{{ loop.index }}">—</span></span>
+                {% if data.risk == "Low Risk" %}
+                    <span class="risk-badge risk-low">● Low Risk</span>
+                {% elif data.risk == "Moderate Risk" %}
+                    <span class="risk-badge risk-moderate">● Moderate Risk</span>
+                {% else %}
+                    <span class="risk-badge risk-high">● High Risk</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card" style="--kpi-color: var(--accent)">
+                <div class="kpi-label">Brand Health</div>
+                <div class="kpi-value">{{ data.health }}<span class="unit">/100</span></div>
+                <div class="health-meter"><div class="health-fill" style="width:{{ data.health }}%"></div></div>
+            </div>
+            <div class="kpi-card" style="--kpi-color: var(--positive)">
+                <div class="kpi-label">Positive</div>
+                <div class="kpi-value" style="color:var(--positive)">{{ data.results.Positive }}</div>
+                <div class="kpi-sub">articles</div>
+            </div>
+            <div class="kpi-card" style="--kpi-color: var(--negative)">
+                <div class="kpi-label">Negative</div>
+                <div class="kpi-value" style="color:var(--negative)">{{ data.results.Negative }}</div>
+                <div class="kpi-sub">articles</div>
+            </div>
+            <div class="kpi-card" style="--kpi-color: var(--neutral)">
+                <div class="kpi-label">Neutral</div>
+                <div class="kpi-value" style="color:var(--neutral)">{{ data.results.Neutral }}</div>
+                <div class="kpi-sub">articles</div>
+            </div>
+            <div class="kpi-card" style="--kpi-color: var(--accent2)">
+                <div class="kpi-label">Pos. Ratio</div>
+                <div class="kpi-value" style="color:var(--accent2)">
+                    {% set total = data.results.Positive + data.results.Negative + data.results.Neutral %}
+                    {% if total > 0 %}{{ ((data.results.Positive / total) * 100) | int }}{% else %}0{% endif %}<span class="unit">%</span>
+                </div>
+                <div class="kpi-sub">of all coverage</div>
+            </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-card-label"><span class="dot"></span>Executive Summary</div>
+                <p>{{ data.executive_summary }}</p>
+            </div>
+            <div class="info-card">
+                <div class="info-card-label"><span class="dot" style="background:var(--accent2)"></span>AI Insight</div>
+                <p>{{ data.insight }}</p>
+            </div>
+            <div class="info-card">
+                <div class="info-card-label"><span class="dot" style="background:var(--accent3)"></span>Recommendation</div>
+                <p>{{ data.recommendation }}</p>
+            </div>
+            <div class="info-card">
+                <div class="info-card-label"><span class="dot" style="background:var(--warn)"></span>Key Topics Detected</div>
+                <div class="topics-list">
+                    {% for t in data.topics %}
+                    <span class="topic-tag">{{ t }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Methodology Card (collapsible) -->
+        <div class="methodology-card">
+            <div class="methodology-toggle" onclick="toggleMethodology(this)">
+                <div class="methodology-toggle-label"><span class="dot"></span>Methodology & Scoring Explanation</div>
+                <span class="methodology-arrow">▼</span>
+            </div>
+            <div class="methodology-body">
+                <div class="method-grid">
+                    <div class="method-item">
+                        <h4>VADER Sentiment</h4>
+                        <p>Compound scores range from −1 (most negative) to +1 (most positive). Articles ≥ 0.05 = Positive, ≤ −0.05 = Negative, else Neutral.</p>
+                    </div>
+                    <div class="method-item">
+                        <h4>Brand Health Score</h4>
+                        <p>Computed as (Positive − Negative) / Total × 100, normalised to a 0–100 scale. Higher scores indicate stronger public perception.</p>
+                    </div>
+                    <div class="method-item">
+                        <h4>Risk Classification</h4>
+                        <p>Negative ratio &gt; 40% = High Risk. 20–40% = Moderate Risk. Below 20% = Low Risk. Based on proportion of negative articles.</p>
+                    </div>
+                    <div class="method-item">
+                        <h4>Volatility (σ)</h4>
+                        <p>Standard deviation of VADER compound scores across all articles. High σ indicates unstable or polarised brand coverage.</p>
+                    </div>
+                    <div class="method-item">
+                        <h4>Confidence Level</h4>
+                        <p>Based on article count. ≥ 15 articles = High, 8–14 = Medium, &lt; 8 = Low. More articles produce more reliable scores.</p>
+                    </div>
+                    <div class="method-item">
+                        <h4>Trend Forecast</h4>
+                        <p>3-point linear regression forecast plotted as a dashed extension on the sentiment trend chart. Uses least-squares extrapolation.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1: Trend + Donut -->
+        <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-card-title">
+                    <div class="chart-card-title-left"><span class="dot"></span>Sentiment Trend + Forecast</div>
+                    <span class="chart-stat">MA: <span id="ma{{ loop.index }}">—</span></span>
+                </div>
+                <canvas id="trend{{ loop.index }}" height="185"></canvas>
+                <div class="forecast-note">Dashed = <span>3-point linear forecast</span></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-card-title">
+                    <div class="chart-card-title-left"><span class="dot" style="background:var(--accent2)"></span>Sentiment Split</div>
+                </div>
+                <div class="donut-wrap">
+                    <canvas id="pie{{ loop.index }}" width="130" height="130"></canvas>
+                    <div class="donut-legend">
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#10b981"></span>Positive
+                            <span class="legend-val">{{ data.results.Positive }}</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#ef4444"></span>Negative
+                            <span class="legend-val">{{ data.results.Negative }}</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#f59e0b"></span>Neutral
+                            <span class="legend-val">{{ data.results.Neutral }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 2: Histogram + Word Cloud -->
+        <div class="chart-row">
+            <div class="chart-card">
+                <div class="chart-card-title">
+                    <div class="chart-card-title-left"><span class="dot" style="background:var(--accent3)"></span>Score Distribution (Histogram)</div>
+                </div>
+                <canvas id="hist{{ loop.index }}" height="180"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-card-title">
+                    <div class="chart-card-title-left"><span class="dot" style="background:var(--warn)"></span>Topic Word Cloud</div>
+                </div>
+                <div class="wordcloud-container" id="wc{{ loop.index }}"></div>
+            </div>
+        </div>
+
+        <!-- Article-level breakdown table -->
+        <div class="article-table-wrap">
+            <div class="article-table-header">
+                <div class="article-table-label"><span class="dot"></span>Article-Level Sentiment Breakdown</div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Snippet</th>
+                        <th>Sentiment</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="articleTable{{ loop.index }}">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- Chart & table scripts for this brand -->
+    <script>
+    (function() {
+        var trendData = {{ data.trend }};
+        var trendLabels = {{ data.trend_labels }};
+        var idx = {{ loop.index }};
+
+        // ── Volatility ──
+        var mean = trendData.reduce(function(a,b){ return a+b; }, 0) / (trendData.length || 1);
+        var variance = trendData.reduce(function(a,b){ return a + Math.pow(b - mean, 2); }, 0) / (trendData.length || 1);
+        var std = Math.sqrt(variance).toFixed(3);
+        document.getElementById('vol' + idx).textContent = std;
+
+        // ── Moving Average ──
+        var maVal = mean.toFixed(3);
+        document.getElementById('ma' + idx).textContent = maVal;
+
+        // ── Linear Forecast (3 pts) ──
+        var n = trendData.length;
+        var xMean = (n - 1) / 2;
+        var num = 0, den = 0;
+        for (var i = 0; i < n; i++) {
+            num += (i - xMean) * (trendData[i] - mean);
+            den += Math.pow(i - xMean, 2);
+        }
+        var slope = den !== 0 ? num / den : 0;
+        var intercept = mean - slope * xMean;
+
+        var forecastLabels = trendLabels.slice();
+        var forecastData = trendData.map(function() { return null; });
+        var forecastLine = trendData.map(function() { return null; });
+
+        for (var j = 1; j <= 3; j++) {
+            forecastLabels.push(n - 1 + j);
+            forecastData.push(null);
+            var fVal = Math.max(-1, Math.min(1, intercept + slope * (n - 1 + j)));
+            forecastLine.push(fVal);
+        }
+        // Connect last real point to first forecast point
+        var connectData = trendData.map(function() { return null; });
+        connectData[n - 1] = trendData[n - 1];
+        for (var k = 1; k <= 3; k++) {
+            var fv = Math.max(-1, Math.min(1, intercept + slope * (n - 1 + k)));
+            connectData.push(fv);
+        }
+
+        // ── Trend Chart ──
+        new Chart(document.getElementById('trend' + idx), {
+            type: 'line',
+            data: {
+                labels: forecastLabels,
+                datasets: [
+                    {
+                        label: 'Sentiment Score',
+                        data: trendData.concat([null, null, null]),
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0,212,255,0.06)',
+                        borderWidth: 2, fill: true, tension: 0.4,
+                        pointBackgroundColor: '#00d4ff',
+                        pointRadius: 4, pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Forecast',
+                        data: connectData,
+                        borderColor: '#7c3aed',
+                        borderDash: [5, 4],
+                        borderWidth: 2, fill: false, tension: 0.3,
+                        pointBackgroundColor: '#7c3aed',
+                        pointRadius: 3, pointHoverRadius: 5
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { color: '#6b7a99', font: { size: 11 }, boxWidth: 12, padding: 16 }
+                    }
+                },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b7a99', font: { size: 11 } } },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#6b7a99', font: { size: 11 } },
+                        min: -1, max: 1
+                    }
+                }
+            }
+        });
+
+        // ── Donut Chart ──
+        new Chart(document.getElementById('pie' + idx), {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive', 'Negative', 'Neutral'],
+                datasets: [{
+                    data: [{{ data.results.Positive }}, {{ data.results.Negative }}, {{ data.results.Neutral }}],
+                    backgroundColor: ['#10b981','#ef4444','#f59e0b'],
+                    borderWidth: 0, hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: false, cutout: '72%',
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // ── Histogram ──
+        var bins = [-1,-0.75,-0.5,-0.25,0,0.25,0.5,0.75,1];
+        var binLabels = ['−1','−0.75','−0.5','−0.25','0','0.25','0.5','0.75'];
+        var counts = new Array(8).fill(0);
+        trendData.forEach(function(v) {
+            for (var b = 0; b < 8; b++) {
+                if (v >= bins[b] && v < bins[b+1]) { counts[b]++; break; }
+                if (b === 7 && v >= bins[7]) { counts[7]++; }
+            }
+        });
+
+        var barColors = binLabels.map(function(_, i) {
+            var mid = (bins[i] + bins[i+1]) / 2;
+            if (mid >= 0.05) return 'rgba(16,185,129,0.75)';
+            if (mid <= -0.05) return 'rgba(239,68,68,0.75)';
+            return 'rgba(245,158,11,0.75)';
+        });
+
+        new Chart(document.getElementById('hist' + idx), {
+            type: 'bar',
+            data: {
+                labels: binLabels,
+                datasets: [{
+                    label: 'Articles',
+                    data: counts,
+                    backgroundColor: barColors,
+                    borderRadius: 5,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b7a99', font: { size: 10 } } },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#6b7a99', font: { size: 10 }, stepSize: 1 },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // ── Word Cloud ──
+        var topics = {{ data.topics | tojson }};
+        var wcColors = ['#00d4ff','#7c3aed','#10b981','#f59e0b','#a78bfa','#34d399','#60a5fa'];
+        var wcWords = topics.map(function(w, i) {
+            return [w, Math.floor(Math.random() * 30) + 20];
+        });
+
+        var wcEl = document.getElementById('wc' + idx);
+        if (typeof WordCloud !== 'undefined') {
+            WordCloud(wcEl, {
+                list: wcWords,
+                gridSize: 8,
+                weightFactor: 5,
+                fontFamily: 'Syne, sans-serif',
+                color: function(word, weight, fontSize, distance, theta) {
+                    return wcColors[Math.floor(Math.random() * wcColors.length)];
+                },
+                rotateRatio: 0.3,
+                rotationSteps: 2,
+                backgroundColor: 'transparent',
+                shrinkToFit: true
+            });
+        } else {
+            // Fallback: pill cloud
+            wcEl.style.display = 'flex';
+            wcEl.style.flexWrap = 'wrap';
+            wcEl.style.alignContent = 'center';
+            wcEl.style.gap = '8px';
+            wcEl.style.padding = '12px';
+            topics.forEach(function(t, i) {
+                var pill = document.createElement('span');
+                pill.textContent = t;
+                pill.style.cssText = 'background:' + wcColors[i % wcColors.length] + '18;color:' + wcColors[i % wcColors.length] + ';border:1px solid ' + wcColors[i % wcColors.length] + '44;padding:6px 14px;border-radius:20px;font-size:0.85rem;font-family:Syne,sans-serif;font-weight:700';
+                wcEl.appendChild(pill);
+            });
+        }
+
+        // ── Article Breakdown Table (using trend data as proxy scores) ──
+        var tbody = document.getElementById('articleTable' + idx);
+        trendData.forEach(function(score, i) {
+            var label = score >= 0.05 ? 'Positive' : (score <= -0.05 ? 'Negative' : 'Neutral');
+            var pillClass = 'sent-' + label.toLowerCase();
+            var scoreColor = score >= 0.05 ? '#10b981' : (score <= -0.05 ? '#ef4444' : '#f59e0b');
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td style="color:var(--text-dim);font-size:0.78rem">' + (i + 1) + '</td>' +
+                '<td style="color:var(--text-muted);font-size:0.82rem">Article ' + (i + 1) + ' — {{ data.brand }} coverage</td>' +
+                '<td><span class="sent-pill ' + pillClass + '">' + label + '</span></td>' +
+                '<td class="score-cell" style="color:' + scoreColor + '">' + score.toFixed(3) + '</td>';
+            tbody.appendChild(tr);
+        });
+
+    })();
+    </script>
+
+    {% if not loop.last %}<div class="section-divider"></div>{% endif %}
+    {% endfor %}
+
+    <!-- COMPETITOR RADAR (only when 2+ brands) -->
+    {% if all_results | length >= 2 %}
+    <div class="section-divider"></div>
+    <div class="competitor-section">
+        <div class="section-heading">
+            <h2>Competitor Analysis</h2>
+            <span class="badge">Multi-Brand</span>
+        </div>
+        <p class="section-sub">Multi-dimensional comparison across key brand health dimensions</p>
+        <div class="radar-grid">
+            <div class="chart-card">
+                <div class="chart-card-title">
+                    <div class="chart-card-title-left"><span class="dot" style="background:var(--accent2)"></span>Radar — Brand Dimension Comparison</div>
+                </div>
+                <canvas id="radarChart" height="280"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-card-title">
+                    <div class="chart-card-title-left"><span class="dot" style="background:var(--accent3)"></span>Health Score Comparison</div>
+                </div>
+                <canvas id="compareBar" height="280"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var radarColors = [
+            { border: '#00d4ff', bg: 'rgba(0,212,255,0.12)' },
+            { border: '#7c3aed', bg: 'rgba(124,58,237,0.12)' },
+            { border: '#10b981', bg: 'rgba(16,185,129,0.12)' },
+            { border: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+            { border: '#ef4444', bg: 'rgba(239,68,68,0.12)' }
+        ];
+
+        var brands = [{% for d in all_results %}"{{ d.brand }}"{% if not loop.last %},{% endif %}{% endfor %}];
+        var healths = [{% for d in all_results %}{{ d.health }}{% if not loop.last %},{% endif %}{% endfor %}];
+        var positives = [{% for d in all_results %}{{ d.results.Positive }}{% if not loop.last %},{% endif %}{% endfor %}];
+        var negatives = [{% for d in all_results %}{{ d.results.Negative }}{% if not loop.last %},{% endif %}{% endfor %}];
+        var neutrals = [{% for d in all_results %}{{ d.results.Neutral }}{% if not loop.last %},{% endif %}{% endfor %}];
+        var articles = [{% for d in all_results %}{{ d.article_count }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+        // Normalise to 0-100 for radar dimensions
+        function norm(arr) {
+            var mx = Math.max.apply(null, arr) || 1;
+            return arr.map(function(v) { return Math.round((v / mx) * 100); });
+        }
+
+        var normHealth = healths;
+        var normPos = norm(positives);
+        var normCov = norm(articles);
+        var normStab = brands.map(function(_, i) {
+            var negRatio = negatives[i] / (articles[i] || 1);
+            return Math.round((1 - negRatio) * 100);
+        });
+        var normNeutral = norm(neutrals);
+
+        var radarDatasets = brands.map(function(b, i) {
+            var c = radarColors[i % radarColors.length];
+            return {
+                label: b,
+                data: [normHealth[i], normPos[i], normCov[i], normStab[i], normNeutral[i]],
+                borderColor: c.border,
+                backgroundColor: c.bg,
+                borderWidth: 2,
+                pointBackgroundColor: c.border,
+                pointRadius: 4
+            };
+        });
+
+        new Chart(document.getElementById('radarChart'), {
+            type: 'radar',
+            data: {
+                labels: ['Health Score', 'Positive Coverage', 'Article Volume', 'Stability', 'Neutral Balance'],
+                datasets: radarDatasets
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    r: {
+                        min: 0, max: 100,
+                        grid: { color: 'rgba(255,255,255,0.07)' },
+                        angleLines: { color: 'rgba(255,255,255,0.07)' },
+                        pointLabels: { color: '#6b7a99', font: { size: 11, family: 'DM Sans' } },
+                        ticks: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: '#6b7a99', font: { size: 11 }, boxWidth: 12, padding: 16 }
+                    }
+                }
+            }
+        });
+
+        // Bar comparison
+        var barColors = radarColors.map(function(c) { return c.border; });
+        new Chart(document.getElementById('compareBar'), {
+            type: 'bar',
+            data: {
+                labels: brands,
+                datasets: [{
+                    label: 'Health Score',
+                    data: healths,
+                    backgroundColor: barColors.slice(0, brands.length),
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true, indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.04)' },
+                        ticks: { color: '#6b7a99', font: { size: 11 } },
+                        min: 0, max: 100
+                    },
+                    y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#e8edf5', font: { size: 12, family: 'Syne', weight: '700' } } }
+                }
+            }
+        });
+    })();
+    </script>
+    {% endif %}
+
+    <!-- RANKING TABLE -->
+    {% if ranking %}
+    <div class="section-divider"></div>
+    <div class="ranking-section">
+        <div class="section-heading">
+            <h2>Brand Leaderboard</h2>
+        </div>
+        <p class="section-sub">Ranked by overall brand health score</p>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Brand</th>
+                        <th>Health Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for brand, score in ranking %}
+                <tr>
+                    <td>
+                        <span class="rank-num {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% endif %}">
+                            {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}#{{ loop.index }}{% endif %}
+                        </span>
+                    </td>
+                    <td class="brand-cell">{{ brand }}</td>
+                    <td>
+                        <div class="score-bar-wrap">
+                            <div class="score-bar">
+                                <div class="score-fill" style="width:{{ score }}%"></div>
+                            </div>
+                            <span class="score-num">{{ score }}</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <footer>
+        <p>BrandPulse AI &nbsp;·&nbsp; AI Brand Perception & Risk Intelligence &nbsp;·&nbsp; 3rd Year Data Science Project &nbsp;·&nbsp; 2025</p>
+    </footer>
+
+</div>
+
+<script>
+    // Live clock
+    function updateTime() {
+        var now = new Date();
+        document.getElementById('headerTime').textContent =
+            now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // Loading overlay animation
+    var form = document.getElementById('analyzeForm');
+    if (form) {
+        form.addEventListener('submit', function() {
+            var overlay = document.getElementById('loadingOverlay');
+            overlay.classList.add('active');
+            var steps = ['step1','step2','step3','step4'];
+            var i = 0;
+            function nextStep() {
+                if (i < steps.length) {
+                    if (i > 0) document.getElementById(steps[i-1]).classList.remove('active');
+                    document.getElementById(steps[i]).classList.add('active');
+                    i++;
+                    setTimeout(nextStep, 1400);
+                }
+            }
+            setTimeout(nextStep, 300);
+        });
+    }
+
+    // Methodology toggle
+    function toggleMethodology(el) {
+        var body = el.nextElementSibling;
+        var arrow = el.querySelector('.methodology-arrow');
+        body.classList.toggle('open');
+        arrow.classList.toggle('open');
+    }
+</script>
+</body>
+</html>
